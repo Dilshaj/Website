@@ -10,18 +10,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repo
+      # 1️⃣ Checkout
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Setup Node.js
+      # 2️⃣ Node.js (Next.js requires 20+)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      # 3️⃣ Install dependencies
+      # 3️⃣ Install deps
       - name: Install dependencies
         run: npm install
 
@@ -29,28 +29,31 @@ jobs:
       - name: Build application
         run: npm run build
 
-      # 5️⃣ VERIFY build output (THIS FIXES EMPTY TAR)
+      # 5️⃣ Sanity check (IMPORTANT)
       - name: Verify build output
         run: |
+          echo "PWD:"
           pwd
-          ls -la
-          ls -la .next
-          ls -la public
-          test -f package.json
+          echo ".next exists?"
+          ls -ld .next
+          echo "Files:"
+          ls
 
-      # 6️⃣ Copy files to EC2 (RUN FROM ROOT)
+      # 6️⃣ COPY ENTIRE PROJECT (SAFE FIX)
       - name: Copy files to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: ".next public package.json package-lock.json next.config.*"
+          source: |
+            .
           target: /var/www/nextjs-app
+          rm: true
           overwrite: true
 
-      # 7️⃣ Restart app with PM2
-      - name: Restart Next.js app
+      # 7️⃣ Restart with PM2
+      - name: Restart Next.js app with PM2
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.EC2_HOST }}
