@@ -21,9 +21,10 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "."
           target: "/var/www/html"
-          rm: true
+          strip_components: 1   # IMPORTANT
+          overwrite: true       # IMPORTANT
 
-      - name: Restart Nginx
+      - name: Reload Nginx
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
